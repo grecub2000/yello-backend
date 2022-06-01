@@ -72,8 +72,8 @@ namespace Yello.Api
                     Description = "Description",
                     Contact = new OpenApiContact
                     {
-                        Name = "Grecu Cristian",
-                        Email = "cristian.grecu@s.unibuc.ro",
+                        Name = "Grecu Bogdan",
+                        Email = "bogdan.grecu13@s.unibuc.ro",
                     }
                 });
 

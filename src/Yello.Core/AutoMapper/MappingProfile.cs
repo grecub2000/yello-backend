@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Operations;
 using Yello.Core.DTOs;
 using Yello.Core.DTOs.Auth;
-using Yello.Core.DTOs.Course;
 using Yello.Core.Models;
 using Yello.Core.DTOs.User;
 using Yello.Keycloak.Models;
+using Yello.Core.Filters; 
 
 namespace Yello.Core.AutoMapper
 {
@@ -24,6 +24,8 @@ namespace Yello.Core.AutoMapper
             CreateMap<User, LoginResponseDto>().ReverseMap();
 
             CreateMap<UserRegisterDto, RegisterDto>().ReverseMap();
+
+            CreateMap<User, UserFilter>().ReverseMap();
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

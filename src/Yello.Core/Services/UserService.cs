@@ -15,6 +15,7 @@ using Yello.Core.Filters;
 using Yello.Core.Middlewares.ExceptionMiddleware.CustomExceptions;
 using Yello.Pagination;
 using Newtonsoft.Json.Linq;
+using Yello.Core.DTOs.Role;
 
 namespace Yello.Core.Services
 {
@@ -23,54 +24,70 @@ namespace Yello.Core.Services
     public class UserService : IUserService
     {
         private readonly IGenericRepository<User> _userRepository;
+        private readonly IGenericRepository<Role> _roleRepository;
         private readonly IKeycloakUserService _keycloakUserService;
         private readonly IMapper _mapper;
         private readonly JwtSecurityTokenHandler _jwtHandler;
 
-        public UserService(IGenericRepository<User> userRepository, IKeycloakUserService keycloakUserService, IMapper mapper)
+        public UserService(IGenericRepository<User> userRepository, IKeycloakUserService keycloakUserService, IMapper mapper, IGenericRepository<Role> roleRepository)
         {
             _userRepository = userRepository;
             _keycloakUserService = keycloakUserService;
             _mapper = mapper;
+            _roleRepository = roleRepository;
             _jwtHandler = new JwtSecurityTokenHandler();
         }
-        
-        public async Task<List<UserDto>> ListAsync(UserFilter userFilter)
+
+        public async Task<List<UserProfileDto>> ListAsync(UserFilter userFilter)
         {
-            
+
             var users = _userRepository
-                .ListAllAsQueryable()
+                .AsQueryable()
                 .ApplyPagination(userFilter)
+                .Where(x => x.KeycloakId == userFilter.KeycloakId)
+                .Where(x => x.Username == userFilter.Username)
                 ;
 
-            var result = await users.Select(user => _mapper.Map<UserDto>(user)).ToListAsync();
+            var result = await users.Select(user => _mapper.Map<UserProfileDto>(user)).ToListAsync();
             return result;
         }
         public async Task<UserProfileDto> GetByIdAsync(int id)
         {
-            var user = await _userRepository.ListAllAsQueryable()
+            var user = await _userRepository.AsQueryable()
                 .Where(x => x.Id == id)
-                //.Include(x => x.FeaturedCourse)
-                //.Include(x => x.CreatedCourses)
-                //.Include(x => x.Courses)
                 .FirstOrDefaultAsync();
             var result = _mapper.Map<UserProfileDto>(user);
             return result;
         }
-
-        public async Task RegisterAsync(UserRegisterDto userRegisterDto)
+        public async Task<UserProfileDto> GetInfoByKeycloakId(string keycloakId)
         {
-            var keycloakUser = _mapper.Map<RegisterDto>(userRegisterDto);
-            var res = await _keycloakUserService.Register(keycloakUser);
+            var user = await _userRepository
+                .AsQueryable()
+                .Include(x => x.Role)
+                .FirstOrDefaultAsync(x => x.KeycloakId == keycloakId);
+            var result = _mapper.Map<UserProfileDto>(user);
+            return result;
+        }
+
+        public async Task RegisterAsync(UserRegisterDto userRegisterDto, string keycloakId)
+        {
+            //var keycloakUser = _mapper.Map<RegisterDto>(userRegisterDto);
+            //var res = await _keycloakUserService.RegisterAsync(keycloakUser);
+            //if (res.HttpStatusCode != HttpStatusCode.Created)
+            //{
+            //throw new CustomBadRequestException(res.Content);
+            //}
             var user = _mapper.Map<User>(userRegisterDto);
-            user.ProfilePicture ??= UserConstants.DefaultProfilePicture;
+            //user.ProfilePicture ??= UserConstants.DefaultProfilePicture;
+            user.KeycloakId = keycloakId;
+            user.RoleId = 1;
             await _userRepository.AddAsync(user);
         }
 
         public async Task<LoginResponseDto> LoginAsync(LoginDto loginDto)
         {
-            var res = await _keycloakUserService.Login(loginDto);
-            switch (res.HttpStatusCode) 
+            var res = await _keycloakUserService.LoginAsync(loginDto);
+            switch (res.HttpStatusCode)
             {
                 case HttpStatusCode.OK:
                     break;
@@ -84,10 +101,31 @@ namespace Yello.Core.Services
             string accessToken = data.access_token;
             var jsonToken = _jwtHandler.ReadJwtToken(accessToken);
             var username = jsonToken.Claims.First(claim => claim.Type == "preferred_username").Value;
-            var user = await _userRepository.ListAllAsQueryable().Where(x => x.Username == username).FirstOrDefaultAsync();
+            var user = await _userRepository.AsQueryable().Where(x => x.Username == username).FirstOrDefaultAsync();
             var ret = _mapper.Map<LoginResponseDto>(user);
             ret.AccessToken = accessToken;
             return ret;
+        }
+
+        public async Task ChangeRoleAsync(RoleChangeDto roleChangeDto)
+        {
+            var user = await _userRepository.GetByIdAsync(roleChangeDto.UserId);
+            var newRole = await _roleRepository.GetByIdAsync(roleChangeDto.RoleId);
+            if (user is null || newRole is null)
+                throw new CustomNotFoundException("User or Role not found");
+            var oldRole = await _roleRepository.GetByIdAsync(user.RoleId);
+            await _keycloakUserService.RemoveRoleFromUserAsync(user.KeycloakId, new RoleDto
+            {
+                Id = oldRole.KeycloakId,
+                Name = oldRole.Name
+            });
+            await _keycloakUserService.AddRoleToUserAsync(user.KeycloakId, new RoleDto
+            {
+                Id = newRole.KeycloakId,
+                Name = newRole.Name
+            });
+            user.RoleId = newRole.Id;
+            await _userRepository.UpdateAsync(user);
         }
     }
 }

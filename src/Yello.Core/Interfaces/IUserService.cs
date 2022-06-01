@@ -8,14 +8,17 @@ using Yello.Core.DTOs.Auth;
 using Yello.Core.DTOs.User;
 using Yello.Core.Filters;
 using Yello.Keycloak.Models;
+using Yello.Core.DTOs.Role;
 
 namespace Yello.Core.Interfaces
 {
     public interface IUserService
     {
         Task<UserProfileDto> GetByIdAsync(int id);
-        Task RegisterAsync(UserRegisterDto userRegisterDto);
-        Task<List<UserDto>> ListAsync(UserFilter userFilter);
+        Task<UserProfileDto> GetInfoByKeycloakId(string keycloakId);
+        Task RegisterAsync(UserRegisterDto userRegisterDto, string keycloakId);
+        Task<List<UserProfileDto>> ListAsync(UserFilter userFilter);
         Task<LoginResponseDto> LoginAsync(LoginDto loginDto);
+        Task ChangeRoleAsync(RoleChangeDto roleChangeDto);
     }
 }
