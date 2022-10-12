@@ -56,12 +56,11 @@ namespace Yello.Api.Controllers
             return Ok(res);
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync(UserRegisterDto registerDto)
         {
-            var keycloakId = User.FindFirst(x => x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
-            await _userService.RegisterAsync(registerDto, keycloakId);
+            await _userService.RegisterAsync(registerDto);
             return Ok();
         }
 
@@ -77,6 +76,22 @@ namespace Yello.Api.Controllers
         public async Task<IActionResult> ChangeRoleAsync(RoleChangeDto roleChangeDto)
         {
             await _userService.ChangeRoleAsync(roleChangeDto);
+            return Ok();
+        }
+
+        [HttpGet("google-auth")]
+        public async Task<IActionResult> GoogleAuthAsync([FromHeader]string authorize)
+        {
+            //var x=  HttpContext.Request.Headers.Authorization;
+            var res = await _userService.GoogleAuthAsync(authorize);
+            return Ok(res);
+        }
+
+        [HttpPost("edit")]
+
+        public async Task<IActionResult> EditAsync(UserDto user)
+        {
+            await _userService.EditAsync(user);
             return Ok();
         }
 

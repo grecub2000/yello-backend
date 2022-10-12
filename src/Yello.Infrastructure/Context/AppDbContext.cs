@@ -15,13 +15,11 @@ namespace Yello.Infrastructure.Context
         }
 
         public DbSet<User> Users { get; set; }
-        //public DbSet<Role> Roles { get; set; }
-        //public DbSet<Tag> Tags { get; set; }
-        //public DbSet<Section> Sections { get; set; }
-        //public DbSet<Chapter> Chapters { get; set; }
-        //public DbSet<Question> Questions { get; set; }
-        //public DbSet<Answer> Answers { get; set; }
-        //public DbSet<RoleApplication> RoleApplications { get; set; }
+        public DbSet<Team> Teams { get; set; }
+        public DbSet<Project> Projects { get; set; }
+        public DbSet<Sprint> Sprints { get; set; }
+        public DbSet<Card> Cards { get; set; }
+        public DbSet<Comment> Comments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

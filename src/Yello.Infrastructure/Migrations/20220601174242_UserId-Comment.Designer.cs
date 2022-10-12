@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Yello.Infrastructure.Context;
 
@@ -10,14 +11,30 @@ using Yello.Infrastructure.Context;
 namespace Yello.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220601174242_UserId-Comment")]
+    partial class UserIdComment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "6.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+            modelBuilder.Entity("CardSprint", b =>
+                {
+                    b.Property<int>("CardsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SprintsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CardsId", "SprintsId");
+
+                    b.HasIndex("SprintsId");
+
+                    b.ToTable("CardSprint");
+                });
 
             modelBuilder.Entity("ProjectUser", b =>
                 {
@@ -67,13 +84,7 @@ namespace Yello.Infrastructure.Migrations
                     b.Property<int>("Priority")
                         .HasColumnType("int");
 
-                    b.Property<int>("Progress")
-                        .HasColumnType("int");
-
                     b.Property<int>("ReporterId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SprintId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -87,8 +98,6 @@ namespace Yello.Infrastructure.Migrations
                     b.HasIndex("AssigneeId");
 
                     b.HasIndex("ReporterId");
-
-                    b.HasIndex("SprintId");
 
                     b.ToTable("Cards");
                 });
@@ -170,9 +179,6 @@ namespace Yello.Infrastructure.Migrations
                     b.Property<string>("Descrption")
                         .HasColumnType("longtext");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<int>("ProjectId")
                         .HasColumnType("int");
 
@@ -192,15 +198,10 @@ namespace Yello.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
 
-                    b.Property<int>("ManagerId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ManagerId");
 
                     b.ToTable("Teams");
                 });
@@ -240,6 +241,21 @@ namespace Yello.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("CardSprint", b =>
+                {
+                    b.HasOne("Yello.Core.Models.Card", null)
+                        .WithMany()
+                        .HasForeignKey("CardsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yello.Core.Models.Sprint", null)
+                        .WithMany()
+                        .HasForeignKey("SprintsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ProjectUser", b =>
@@ -286,23 +302,15 @@ namespace Yello.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Yello.Core.Models.Sprint", "Sprint")
-                        .WithMany("Cards")
-                        .HasForeignKey("SprintId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Assignee");
 
                     b.Navigation("Reporter");
-
-                    b.Navigation("Sprint");
                 });
 
             modelBuilder.Entity("Yello.Core.Models.Comment", b =>
                 {
                     b.HasOne("Yello.Core.Models.Card", "Card")
-                        .WithMany("Comments")
+                        .WithMany()
                         .HasForeignKey("CardId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -340,17 +348,6 @@ namespace Yello.Infrastructure.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("Yello.Core.Models.Team", b =>
-                {
-                    b.HasOne("Yello.Core.Models.User", "Manager")
-                        .WithMany("TeamsManager")
-                        .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Manager");
-                });
-
             modelBuilder.Entity("Yello.Core.Models.User", b =>
                 {
                     b.HasOne("Yello.Core.Models.Role", "Role")
@@ -362,11 +359,6 @@ namespace Yello.Infrastructure.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("Yello.Core.Models.Card", b =>
-                {
-                    b.Navigation("Comments");
-                });
-
             modelBuilder.Entity("Yello.Core.Models.Project", b =>
                 {
                     b.Navigation("Sprints");
@@ -375,11 +367,6 @@ namespace Yello.Infrastructure.Migrations
             modelBuilder.Entity("Yello.Core.Models.Role", b =>
                 {
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("Yello.Core.Models.Sprint", b =>
-                {
-                    b.Navigation("Cards");
                 });
 
             modelBuilder.Entity("Yello.Core.Models.Team", b =>
@@ -394,8 +381,6 @@ namespace Yello.Infrastructure.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("ReporterCards");
-
-                    b.Navigation("TeamsManager");
                 });
 #pragma warning restore 612, 618
         }

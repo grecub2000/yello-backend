@@ -16,9 +16,13 @@ namespace Yello.Core.Interfaces
     {
         Task<UserProfileDto> GetByIdAsync(int id);
         Task<UserProfileDto> GetInfoByKeycloakId(string keycloakId);
-        Task RegisterAsync(UserRegisterDto userRegisterDto, string keycloakId);
+        Task RegisterAsync(UserRegisterDto userRegisterDto);
         Task<List<UserProfileDto>> ListAsync(UserFilter userFilter);
+        Task<List<UserProfileDto>> ListByTeamAsync(int id);
         Task<LoginResponseDto> LoginAsync(LoginDto loginDto);
+        Task<LoginResponseDto> GoogleAuthAsync(string token);
         Task ChangeRoleAsync(RoleChangeDto roleChangeDto);
+        Task EditAsync(UserDto user);
+
     }
 }

@@ -40,21 +40,47 @@ namespace Yello.Core.Services
 
         public async Task<List<UserProfileDto>> ListAsync(UserFilter userFilter)
         {
+            var query = _userRepository.AsQueryable();
+            if (!String.IsNullOrEmpty(userFilter.KeycloakId))
+            {
+                //query = query.Where
+            }
+            //var users = _userRepository
+            //    .AsQueryable()
+            //    //.ApplyPagination(userFilter)
+            //    .Where(x => x.KeycloakId == userFilter.KeycloakId)
+            //    .Where(x => x.Username == userFilter.Username)
+            //    .AsQueryable();
+            //;
+
+            var result = await query.Select(user => _mapper.Map<UserProfileDto>(user)).ToListAsync();
+            return result;
+        }
+
+        public async Task<List<UserProfileDto>> ListByTeamAsync(int id)
+        {
 
             var users = _userRepository
                 .AsQueryable()
-                .ApplyPagination(userFilter)
-                .Where(x => x.KeycloakId == userFilter.KeycloakId)
-                .Where(x => x.Username == userFilter.Username)
-                ;
-
+                .Include(x => x.Teams)
+                //.ApplyPagination
+                .Where(x => x.Teams.Any(y => x.Id == id));
             var result = await users.Select(user => _mapper.Map<UserProfileDto>(user)).ToListAsync();
             return result;
         }
+
+
         public async Task<UserProfileDto> GetByIdAsync(int id)
         {
             var user = await _userRepository.AsQueryable()
                 .Where(x => x.Id == id)
+                //.Include(x => x.Comments)
+                //.Include(x => x.AssigneeCards)
+                //.Include(x => x.ReporterCards)
+                //.Include(x => x.Teams).ThenInclude(x => x.Users)
+                ////.Include(x => x.Teams).ThenInclude(x => x.Projects)
+                //.Include(x => x.TeamsManager)
+                //.Include(x => x.Projects)
                 .FirstOrDefaultAsync();
             var result = _mapper.Map<UserProfileDto>(user);
             return result;
@@ -63,25 +89,62 @@ namespace Yello.Core.Services
         {
             var user = await _userRepository
                 .AsQueryable()
-                .Include(x => x.Role)
+                .Include(x => x.Comments)
+                .Include(x => x.AssigneeCards)
+                .Include(x => x.ReporterCards)
+                .Include(x => x.Teams).ThenInclude(x => x.Users)
+                //.Include(x => x.Teams).ThenInclude(x => x.Projects)
+                .Include(x => x.TeamsManager)
+                .Include(x => x.Projects)
                 .FirstOrDefaultAsync(x => x.KeycloakId == keycloakId);
             var result = _mapper.Map<UserProfileDto>(user);
             return result;
         }
 
-        public async Task RegisterAsync(UserRegisterDto userRegisterDto, string keycloakId)
+        public async Task RegisterAsync(UserRegisterDto userRegisterDto)
         {
-            //var keycloakUser = _mapper.Map<RegisterDto>(userRegisterDto);
-            //var res = await _keycloakUserService.RegisterAsync(keycloakUser);
-            //if (res.HttpStatusCode != HttpStatusCode.Created)
-            //{
-            //throw new CustomBadRequestException(res.Content);
-            //}
+            var keycloakUser = _mapper.Map<RegisterDto>(userRegisterDto);
+            var res = await _keycloakUserService.RegisterAsync(keycloakUser);
+            if (res.HttpStatusCode != HttpStatusCode.Created)
+            {
+                throw new CustomBadRequestException(res.Content);
+            }
             var user = _mapper.Map<User>(userRegisterDto);
-            //user.ProfilePicture ??= UserConstants.DefaultProfilePicture;
-            user.KeycloakId = keycloakId;
+            user.ProfilePicture ??= null;
+            user.KeycloakId = res.Content;
             user.RoleId = 1;
             await _userRepository.AddAsync(user);
+        }
+        
+        public async Task<LoginResponseDto> GoogleAuthAsync(string token)
+        {
+
+            var jsonToken = _jwtHandler.ReadJwtToken(token);
+            var tokenS = jsonToken as JwtSecurityToken;
+            var googleId = tokenS.Claims.First(claim => claim.Type == "sub").Value;
+            var user = await _userRepository
+                .AsQueryable()
+                .FirstOrDefaultAsync(x => x.KeycloakId == googleId);
+            if (user != null)
+            {
+                var usr = _mapper.Map<LoginResponseDto>(user);
+                usr.AccessToken = token;
+                return usr;
+            }
+            var newUser = new User();
+            newUser.KeycloakId = tokenS.Claims.First(claim => claim.Type == "sub").Value;
+            newUser.Email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            newUser.Username = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            newUser.FirstName = tokenS.Claims.First(claim => claim.Type == "given_name").Value;
+            newUser.LastName = tokenS.Claims.First(claim => claim.Type == "family_name").Value;
+            newUser.ProfilePicture = tokenS.Claims.First(claim => claim.Type == "picture").Value;
+            newUser.RoleId = 1;
+            await _userRepository.AddAsync(newUser);
+
+            var ret = _mapper.Map<LoginResponseDto>(newUser);
+            ret.AccessToken = token;
+            return ret;
+
         }
 
         public async Task<LoginResponseDto> LoginAsync(LoginDto loginDto)
@@ -127,5 +190,21 @@ namespace Yello.Core.Services
             user.RoleId = newRole.Id;
             await _userRepository.UpdateAsync(user);
         }
+
+        public async Task EditAsync(UserDto user)
+        {
+
+            var newUser = await _userRepository.AsQueryable()
+                .Where(x => x.Id == user.Id).FirstOrDefaultAsync();
+
+            //var usered = _mapper.Map<User>(user);
+            newUser.Email = user.Email;
+            newUser.FirstName = user.FirstName;
+            newUser.LastName = user.LastName;
+            newUser.ProfilePicture = user.ProfilePicture;
+            await _userRepository.UpdateAsync(newUser);
+
+        }
+
     }
 }

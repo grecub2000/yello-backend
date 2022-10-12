@@ -87,6 +87,11 @@ namespace Yello.Infrastructure.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
+        public async Task SaveChangesAsync()
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+
         //public async Task<int> CountAsync(ISpecification<T> spec)
         //{
         //    var specificationResult = ApplySpecification(spec);

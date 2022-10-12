@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Yello.Core.AutoMapper;
 using Yello.Core.Interfaces;
+using Yello.Core.Interfaces.Services;
 using Yello.Core.Interfaces.Repositories;
 using Yello.Core.Services;
 using Yello.Infrastructure.Context;
@@ -37,6 +38,12 @@ namespace Yello.Api
         {
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ITeamService, TeamService>();
+            services.AddScoped<IProjectService, ProjectService>();
+            services.AddScoped<ISprintService, SprintService>();
+            services.AddScoped<ICardService, CardService>();
+            services.AddScoped<ICommentService, CommentService>();
+
             //services.AddScoped<IRoleService, RoleService>();
             //services.AddScoped<ICourseService, CourseService>();
             //services.AddScoped<ISectionService, SectionService>();

@@ -10,6 +10,7 @@
         Task UpdateAsync(T entity);
         Task UpdateRangeAsync(List<T> entities);
         Task DeleteAsync(T entity);
+        Task SaveChangesAsync();
 
         //Task<T> PatchAsync(int id, JsonPatchDocument<T> patchDocument);
 

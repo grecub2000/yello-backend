@@ -5,6 +5,12 @@ using Yello.Core.DTOs;
 using Yello.Core.DTOs.Auth;
 using Yello.Core.Models;
 using Yello.Core.DTOs.User;
+using Yello.Core.DTOs.Team;
+using Yello.Core.DTOs.Project;
+using Yello.Core.DTOs.Sprint;
+using Yello.Core.DTOs.Card;
+using Yello.Core.DTOs.Comment;
+using Yello.Core.DTOs.Comment;
 using Yello.Keycloak.Models;
 using Yello.Core.Filters; 
 
@@ -26,6 +32,25 @@ namespace Yello.Core.AutoMapper
             CreateMap<UserRegisterDto, RegisterDto>().ReverseMap();
 
             CreateMap<User, UserFilter>().ReverseMap();
+
+            CreateMap<Team, TeamDto>().ReverseMap();
+            CreateMap<Team, TeamCreateDto>().ReverseMap();
+
+            CreateMap<Project, ProjectDto>().ReverseMap();
+            CreateMap<Project, ProjectCreateDto>().ReverseMap();
+
+            CreateMap<Sprint, SprintDto>().ReverseMap();
+            CreateMap<Sprint, SprintCreateDto>().ReverseMap();
+            CreateMap<Sprint, SprintCompleteDto>().ReverseMap();
+            CreateMap<Sprint, SprintInfoDto>().ReverseMap();
+
+
+
+            CreateMap<Card, CardDto>().ReverseMap();
+            CreateMap<Card, CardCreateDto>().ReverseMap();
+
+            CreateMap<Comment, CommentDto>().ReverseMap();
+            CreateMap<Comment, CommentCreateDto>().ReverseMap();
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
